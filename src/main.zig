@@ -3,11 +3,11 @@ const stdout = std.io.getStdOut().writer();
 const cwd = std.fs.cwd();
 const max_iter: u8 = 255;
 const julia_type = std.math.Complex(f32);
-const screenwidth: usize = 800;
-const screenheight: usize = 600;
+const screenwidth: usize = 1920;
+const screenheight: usize = 1080;
 const inv_width = 1.0 / @as(f32, @floatFromInt(screenwidth));
 const inv_height = 1.0 / @as(f32, @floatFromInt(screenheight));
-
+const max_value1: f32 = 2;
 pub fn main() !void {
     const buf_len: usize = screenwidth * screenheight;
     try cwd.makePath("frames");
@@ -25,26 +25,31 @@ pub fn main() !void {
     var path_buf_arr: [1024]u8 = undefined;
     const path_buf = path_buf_arr[0..];
     const start_time = @as(u64, @intCast(std.time.nanoTimestamp()));
-
+    //const c = julia_type.init(-0.8, 0.156);
     while (i < total_seconds) : (i += 1) {
         const c = julia_type.init(
             @cos(time),
             @sin(time),
         );
-        calculateJulia(juila_buf, screenwidth, screenheight, c, max_iter, 2.0);
+        calculateJulia(juila_buf, screenwidth, screenheight, c, max_iter, max_value1);
         time += dt;
         var idx: usize = 0;
         while (idx < buf_len) : (idx += 1) {
-            const r = juila_buf[idx];
-            const g = juila_buf[idx];
-            const b = juila_buf[idx];
-            image_buf[idx] = .{ r, g, b };
+            image_buf[idx] = iterationToRGB(juila_buf[idx], max_iter);
         }
         const path = try std.fmt.bufPrint(path_buf, "frames/frame_{d:0>4}.ppm", .{i});
         try writePPm6(path, image_buf, screenwidth, screenheight);
         try printProgressBar(i, total_seconds, start_time);
     }
 }
+fn iterationToRGB(iter: u8, max_iterations: u8) [3]u8 {
+    const t = @as(f32, @floatFromInt(iter)) / @as(f32, @floatFromInt(max_iterations));
+    const r: u8 = @intFromFloat(9.0 * (1.0 - t) * t * t * t * 255.0);
+    const g: u8 = @intFromFloat(15.0 * (1.0 - t) * (1.0 - t) * t * t * 255.0);
+    const b: u8 = @intFromFloat(8.5 * (1.0 - t) * (1.0 - t) * (1.0 - t) * t * 255.0);
+    return .{ r, g, b };
+}
+
 fn printProgressBar(current: usize, total: usize, start_time: u64) !void {
     const bar_width = 40;
 

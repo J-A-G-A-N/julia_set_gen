@@ -22,3 +22,10 @@ zig build run
 zig build -Doptimize=ReleaseFast run
 ```
 
+## Convert ppm frames to MP4
+
+```bash
+cd frames
+ffmpeg -framerate 60 -i frame_%04d.ppm -vf "scale=1920:1080" -pix_fmt yuv420p out.mp4
+
+```
